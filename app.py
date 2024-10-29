@@ -90,8 +90,8 @@ def load_model(embedding_size, block_size, activation_fn):
     return model
 
 #streamlit app
-st.title("Next-Word Prediction App")
-st.write("This app predicts the next words based on an input text. Choose a model and configuration, then enter some starting text.")
+st.title("Next Word Prediction App")
+st.write("This app is designed to predict the next words based on input text provided by the user. You may choose a model and configuration, then enter some starting text.")
 
 #selecting model configuration
 embedding_sizes = [64, 128]
