@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import urllib.request
 import re
 from collections import Counter
+import Levenshtein
 
 #setting device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -26,11 +27,9 @@ with open(file_path, 'r', encoding='utf-8') as file:
 
 #function to clean RTF file
 def clean_rtf(rtf):
-    # Remove RTF formatting
-    # This regex removes everything that isn't plain text
-    cleaned_text = re.sub(r'{\\.*?}', '', rtf)  # Remove RTF groups
-    cleaned_text = re.sub(r'\\[a-z]+\d* ?', '', cleaned_text)  # Remove RTF commands
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Remove extra spaces
+    cleaned_text = re.sub(r'{\\.*?}', '', rtf)
+    cleaned_text = re.sub(r'\\[a-z]+\d* ?', '', cleaned_text)
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)
     return cleaned_text.strip()
 
 #cleaning the RTF text
@@ -54,8 +53,6 @@ words = cleaned_text.split()
 words_vocab = sorted(set(words))
 stoi = {s: i for i, s in enumerate(words_vocab)}
 itos = {i: s for i, s in enumerate(words_vocab)}
-
-
 
 class NextWordMLP(nn.Module):
     def __init__(self, block_size, vocab_size, emb_dim, hidden_size, activation):
@@ -84,9 +81,7 @@ def generate_text(model, itos, stoi, block_size, max_length=50):
         context = context[1:] + [ix]
     return ' '.join(generated_words)
 
-
-
-# Load model function
+#loading model function
 def load_model(embedding_size, block_size, activation_fn):
     model = NextWordMLP(block_size, len(stoi), embedding_size, 512, activation_fn).to(device)
     model_filename = f"saved_models/model_emb{embedding_size}_ctx{block_size}_act{activation_fn.__name__}.pt"
@@ -94,11 +89,11 @@ def load_model(embedding_size, block_size, activation_fn):
     model.eval()
     return model
 
-# Streamlit App
-st.title("Next-Word Prediction App")
-st.write("This app predicts the next words based on an input text. Choose a model and configuration, then enter some starting text.")
+#streamlit app
+st.title("Next Word Prediction App")
+st.write("This app is designed to predict the next words based on input text provided by the user. You may choose a model and configuration, then enter some starting text.")
 
-# Select Model Configuration
+#selecting model configuration
 embedding_sizes = [64, 128]
 context_lengths = [5, 10, 15]
 activations = ["relu", "tanh"]
@@ -112,22 +107,25 @@ model_options = [
 
 model_selection = st.selectbox("Choose a Model", model_options)
 
-# Parse selected model options
+#parsing selected model options
 embedding_size, block_size, activation_fn_name = model_selection.split(", ")
 embedding_size = int(embedding_size.split(": ")[1])
 block_size = int(block_size.split(": ")[1])
 activation_fn = F.relu if activation_fn_name=="relu" else torch.tanh
 
-# Load the selected model
+#loading the selected model
 model = load_model(embedding_size, block_size, activation_fn)
 
-# Enter Starting Text
+#entering starting text
 starting_text = st.text_input("Input some text to start prediction:")
 max_length = st.slider("Select max length of generated text:", min_value=5, max_value=100, value=50)
 
 if st.button("Generate Text"):
     if starting_text:
-        context = [stoi[word] for word in starting_text.split()[-block_size:]]  # Take the last `block_size` words
+        context = []
+        for word in starting_text.split()[-block_size:]:  #taking the last `block_size` words
+            if word in stoi:
+                context.append(stoi[word])
         generated_text = generate_text(model, itos, stoi, block_size, max_length=max_length)
         st.write("Generated Text:")
         st.write(generated_text)
