@@ -87,9 +87,9 @@ def generate_text(model, itos, stoi, block_size, max_length=50):
 
 
 # Load model function
-def load_model(embedding_size, block_size, activation_fn_name):
-    model = NextWordMLP(block_size, len(stoi), embedding_size, 512, activation_fn_name).to(device)
-    model_filename = f"saved_models/model_emb{embedding_size}_ctx{block_size}_act{activation_fn_name}.pt"
+def load_model(embedding_size, block_size, activation_fn):
+    model = NextWordMLP(block_size, len(stoi), embedding_size, 512, activation_fn).to(device)
+    model_filename = f"saved_models/model_emb{embedding_size}_ctx{block_size}_act{activation_fn.__name__}.pt"
     model.load_state_dict(torch.load(model_filename))
     model.eval()
     return model
@@ -116,10 +116,10 @@ model_selection = st.selectbox("Choose a Model", model_options)
 embedding_size, block_size, activation_fn_name = model_selection.split(", ")
 embedding_size = int(embedding_size.split(": ")[1])
 block_size = int(block_size.split(": ")[1])
-activation_fn_name = activation_fn_name.split(": ")[1]
+activation_fn = F.relu if activation_fn_name=="relu" else torch.tanh
 
 # Load the selected model
-model = load_model(embedding_size, block_size, activation_fn_name)
+model = load_model(embedding_size, block_size, activation_fn)
 
 # Enter Starting Text
 starting_text = st.text_input("Input some text to start prediction:")
