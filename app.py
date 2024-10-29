@@ -70,8 +70,8 @@ class NextWordMLP(nn.Module):
         x = self.lin2(x)
         return x
 
-def generate_text(model, itos, stoi, block_size, max_length=50):
-    context = [0] * block_size
+def generate_text(context, model, itos, stoi, block_size, max_length=50):
+    #context = [0] * block_size
     generated_words = []
     for _ in range(max_length):
         x = torch.tensor(context).view(1, -1).to(device)
@@ -128,7 +128,15 @@ if st.button("Generate Text"):
         for word in starting_text.split()[-block_size:]:  #taking the last `block_size` words
             if word in stoi:
                 context.append(stoi[word])
-        generated_text = generate_text(model, itos, stoi, block_size, max_length=max_length)
+        if (len(context) < block_size):
+            newcontext = []
+            for i in range(block_size - len(context)):
+                newcontext.append(0)
+            for i in range(len(context)):
+                newcontext.append(context[i])
+            generated_text = generate_text(newcontext, model, itos, stoi, block_size, max_length=max_length)
+        else:
+            generated_text = generate_text(context, model, itos, stoi, block_size, max_length=max_length)
         st.write("Generated Text:")
         st.write(generated_text)
     else:
