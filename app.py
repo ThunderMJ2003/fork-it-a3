@@ -86,7 +86,8 @@ def generate_text(model, itos, stoi, block_size, max_length=50):
 def load_model(embedding_size, block_size, activation_fn):
     model = NextWordMLP(block_size, len(stoi), embedding_size, 512, activation_fn).to(device)
     model_filename = f"saved_models/model_emb{embedding_size}_ctx{block_size}_act{activation_fn.__name__}.pt"
-    model.load_state_dict(torch.load(model_filename))
+    #model.load_state_dict(torch.load(model_filename))
+    model.load_state_dict(torch.load(model_filename, map_location=torch.device('cpu')))
     model.eval()
     return model
 
