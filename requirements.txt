@@ -2,3 +2,5 @@ torch
 streamlit
 numpy
 pandas
+matplotlib
+Levenshtein
